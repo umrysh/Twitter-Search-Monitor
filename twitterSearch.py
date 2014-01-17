@@ -32,7 +32,7 @@ class MailNotifier(object):
     """
     def __init__(self, search="softlayer", server="smtp.gmail.com",
                  to="SET ME",
-                 port=587, user=None, password=None, from_=None):
+                 port=587, user=None, password=None, from_=None, logfilename=None):
         self.search_term = search
         self.server = server
         self.port = port
@@ -41,6 +41,7 @@ class MailNotifier(object):
         self.from_ = from_ or "SLitter Monitor <twitter@softlayer.com>"
         self.to = to
         self._log_value = None
+        self.logfile = logfilename or 'tweet.id'
 
         self.date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
         self.subject = "%s twitter mentions %s " % ('%d', self.date)
@@ -56,14 +57,19 @@ class MailNotifier(object):
     @property
     def log_value(self):
         if self._log_value is None:
-            with open('tweet.id', 'r') as f:
-                self._log_value = int(f.read())
+            try:
+                with open(self.logfile, 'r') as f:
+                    self._log_value = int(f.read())
+            except IOError:
+                with open(self.logfile, 'w+') as f:
+                    f.write("0")
+                self._log_value = 0
         return self._log_value
 
     @log_value.setter  # NOQA
     def log_value(self, value):
         self._log_value = value
-        with open('tweet.id', 'w+') as f:
+        with open(self.logfile, 'w+') as f:
             f.write(str(value))
 
     def _format_message(self, subject, body, count):
