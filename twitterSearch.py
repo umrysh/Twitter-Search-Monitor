@@ -107,12 +107,13 @@ class MailNotifier(object):
         returns = []
         if len(results) > 0:
             for result in results:
-                returns.append(format_status(result))
+                if not any(substring in result.text.lower() for substring in search_keys[search]):
+                    returns.append(format_status(result))
 
             self.new_tweets(results)
             return returns, len(returns)
         else:
-            exit()
+            return returns, len(returns)
 
 
 if __name__ == "__main__":
@@ -125,12 +126,17 @@ if __name__ == "__main__":
         access_token_secret='SET ME')
 
     """
-        Enter email authentication, search term, and to email address here. If not set here the default values
+        Enter email authentication, search terms, and to email address here. If not set here the default values
         above will be used. Mail server infromation defaults to gmail
     """
-    notifier = MailNotifier(user='SET ME', password='SET ME', to='SET ME',
-        search='SET ME')
-    unformatted_body, count = notifier.status_by_search(notifier.search_term)
-    body = messages_to_string(unformatted_body)
+    global search_keys
+    search_keys = {'softlayer' : [],'umrysh' : ["song","awesome"]}
 
-    notifier.send_mail(body, count)
+    for key in search_keys.iterkeys():
+        notifier = MailNotifier(user='SET ME', password='SET ME', to='SET ME',
+            search=key,logfilename="tweet." + key)
+    
+        unformatted_body, count = notifier.status_by_search(notifier.search_term)
+        if count > 0:
+            body = messages_to_string(unformatted_body)
+            notifier.send_mail(body, count)
