@@ -44,7 +44,7 @@ class MailNotifier(object):
         self.logfile = logfilename or 'tweet.id'
 
         self.date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-        self.subject = "%s twitter mentions %s " % ('%d', self.date)
+        self.subject = "%s %s twitter mentions %s " % ('%d','%s', self.date)
         self.smtp_message = "\n".join([
             "From: %s",
             "To: %s",
@@ -72,15 +72,15 @@ class MailNotifier(object):
         with open(self.logfile, 'w+') as f:
             f.write(str(value))
 
-    def _format_message(self, subject, body, count):
+    def _format_message(self, subject, body, count,search):
         return self.smtp_message % (
             self.from_, self.to,
-            subject % count,
+            subject % (count,search),
             self.date,
             body.encode('utf8')
         )
 
-    def send_mail(self, message, count):
+    def send_mail(self, message, count,search):
         try:
             smtp = SMTP()
             smtp.connect(self.server, self.port)
@@ -89,7 +89,7 @@ class MailNotifier(object):
             smtp.ehlo()
             smtp.login(self.user, self.passwd)
             smtp.sendmail(self.from_, self.to, self._format_message(self.subject,
-                message, count))
+                message, count,search))
             smtp.quit()
 
         except Exception, exc:
@@ -139,4 +139,4 @@ if __name__ == "__main__":
         unformatted_body, count = notifier.status_by_search(notifier.search_term)
         if count > 0:
             body = messages_to_string(unformatted_body)
-            notifier.send_mail(body, count)
+            notifier.send_mail(body, count,key)
